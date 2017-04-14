@@ -35,9 +35,7 @@ merge-git-projects configfile
 ## Configuration file
 
 Configuration file describes what you want to merge and where. A sample file is
-included.
-
-A sample file is included with this project.
+included with this project.
 
 Config file is a JSON file that consists from three sections:
 
@@ -77,7 +75,7 @@ GitFlow). It should list any non-feature branches that you use plus HEAD.
 
 ## License
 
-GPL v3. If you do derieved work, please, add me to credits.
+GPL v3. If you do derived work, please, add me to credits.
 
 ## Support
 
