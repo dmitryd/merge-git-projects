@@ -5,7 +5,7 @@
         "commit.gpgsign": false
     },
     "mainProject": {
-        "name": "realurl",
+        "name": "mainProject",
         "repository": "git@github.com:user/main-project.git",
         "mainBranch": "development",
         "createBranch": "merging"
