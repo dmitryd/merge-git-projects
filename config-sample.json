@@ -1,0 +1,33 @@
+{
+    "gitConfig": {
+        "user.email": "user@host.ch",
+        "user.name": "John Doe",
+        "commit.gpgsign": false
+    },
+    "mainProject": {
+        "name": "realurl",
+        "repository": "git@github.com:user/main-project.git",
+        "mainBranch": "development",
+        "createBranch": "merging"
+    },
+    "projectsToMerge": {
+        "subproject1": {
+            "repository": "git@github.com:user/subproject1.git",
+            "path": "extensions/subproject1",
+            "mainBranch": "development",
+            "ignoreBranches": "~origin/(HEAD|master|dev)~"
+        },
+        "subproject2": {
+            "repository": "git@github.com:user/subproject2.git",
+            "path": "extensions/subproject2",
+            "mainBranch": "development",
+            "ignoreBranches": "~origin/(HEAD|master|dev)~"
+        },
+        "subproject3": {
+            "repository": "git@github.com:user/subproject3.git",
+            "path": "admin/modules/subproject3",
+            "mainBranch": "development",
+            "ignoreBranches": "~origin/(HEAD|master|dev)~"
+        }
+    }
+}
