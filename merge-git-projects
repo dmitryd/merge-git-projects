@@ -23,7 +23,8 @@
 ***************************************************************/
 
 /**
- * This class
+ * This class contains a tool to merge several git repositories to
+ * a single repository preserving history.
  *
  * Credits:
  * - http://stackoverflow.com/a/14470212/2071628
