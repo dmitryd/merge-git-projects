@@ -15,19 +15,19 @@
             "repository": "git@github.com:user/subproject1.git",
             "path": "extensions/subproject1",
             "mainBranch": "development",
-            "ignoreBranches": "~origin/(HEAD|master|development)~"
+            "ignoreBranches": "origin/(HEAD|master|development)"
         },
         "subproject2": {
             "repository": "git@github.com:user/subproject2.git",
             "path": "extensions/subproject2",
             "mainBranch": "development",
-            "ignoreBranches": "~origin/(HEAD|master|development)~"
+            "ignoreBranches": "origin/(HEAD|master|development)"
         },
         "subproject3": {
             "repository": "git@github.com:user/subproject3.git",
             "path": "admin/modules/subproject3",
             "mainBranch": "development",
-            "ignoreBranches": "~origin/(HEAD|master|development)~"
+            "ignoreBranches": "origin/(HEAD|master|development)"
         }
     }
 }
