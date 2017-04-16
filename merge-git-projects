@@ -145,7 +145,7 @@ class Merge {
      * Runs emercency shell and prompts the user whether to continue or not.
      */
     protected function emergencyShell() {
-        echo "Something went wrong. Brining the emergency shell to correct errors manually...\n";
+        echo "Something went wrong. Bringing the emergency shell to correct errors manually...\n";
         echo "===========================================\n\n";
 
         $shell = getenv('SHELL');
