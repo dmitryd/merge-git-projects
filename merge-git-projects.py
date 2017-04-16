@@ -250,6 +250,12 @@ class MergeGitProjects:
 
 
     def _rewrite_history(self, project_name):
+        """
+        Retwrites history for the project. This moves the project into its right
+        place inside the main project.
+
+        :param: project_name: project name to process
+        """
         project = self.__configuration['projectsToMerge'][project_name]
         current_directory = os.getcwd()
         os.chdir(os.path.join(current_directory, project_name))
