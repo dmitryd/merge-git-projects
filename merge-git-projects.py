@@ -153,7 +153,7 @@ class MergeGitProjects:
         """
         new_branches = {}
         project = self.__configuration['projectsToMerge'][project_name]
-        branch_starting_point_command = "diff -u <(git rev-list --first-parent %s) <(git rev-list --first-parent dev) | sed -ne 's/^ //p' | head -1"
+        branch_starting_point_command = "diff -u <(git rev-list --first-parent %s) <(git rev-list --first-parent %s) | sed -ne 's/^ //p' | head -1"
 
         current_directory = os.getcwd()
         os.chdir(os.path.join(current_directory, project_name))
@@ -164,7 +164,7 @@ class MergeGitProjects:
             if project['ignoreBranches'] == '' or not re.match(project['ignoreBranches'], remote_branch) and remote_branch[0:7] == 'origin/':
                 local_branch = remote_branch[7:]
                 self._execute_shell_command('git checkout -b %s %s', local_branch, remote_branch)
-                new_branches[local_branch] = self._execute_shell_command(branch_starting_point_command, local_branch)[0]
+                new_branches[local_branch] = self._execute_shell_command(branch_starting_point_command, local_branch, project['mainBranch'])[0]
 
         self._execute_shell_command('git checkout %s', project['mainBranch'])
 

@@ -201,7 +201,7 @@ class Merge {
     protected function findNonMergedBranches($projectName) {
         $output = array();
         $project = &$this->projectsToMerge[$projectName];
-        $branchStartingPointCommand = "diff -u <(git rev-list --first-parent %s) <(git rev-list --first-parent dev) | sed -ne 's/^ //p' | head -1";
+        $branchStartingPointCommand = "diff -u <(git rev-list --first-parent %s) <(git rev-list --first-parent %s) | sed -ne 's/^ //p' | head -1";
         $currentDirectory = getcwd();
         chdir($currentDirectory . '/' . $projectName);
         $this->executeShellCommand('git branch -r --no-merged %s', array($project['mainBranch']), $output);
@@ -211,7 +211,7 @@ class Merge {
             if (($project['ignoreBranches'] === '' || !preg_match($regexp, $remoteBranch)) && substr($remoteBranch, 0, 7) === 'origin/') {
                 $localBranch = substr($remoteBranch, 7);
                 $this->executeShellCommand('git checkout -b %s %s', array($localBranch, $remoteBranch));
-                $project['copyBranches'][$localBranch] = $this->executeShellCommand($branchStartingPointCommand, array($localBranch));
+                $project['copyBranches'][$localBranch] = $this->executeShellCommand($branchStartingPointCommand, array($localBranch, $project['mainBranch']));
             }
         }
         $this->executeShellCommand('git checkout %s', array($project['mainBranch']));
