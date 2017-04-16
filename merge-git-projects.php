@@ -207,7 +207,7 @@ class Merge {
         $this->executeShellCommand('git branch -r --no-merged %s', array($project['mainBranch']), $output);
         foreach ($output as $remoteBranch) {
             $remoteBranch = trim($remoteBranch);
-            $regexp = '/' . preg_quote($project['ignoreBranches']) . '/';
+            $regexp = '/' . str_replace('/', '\/', $project['ignoreBranches']) . '/';
             if (($project['ignoreBranches'] === '' || !preg_match($regexp, $remoteBranch)) && substr($remoteBranch, 0, 7) === 'origin/') {
                 $localBranch = substr($remoteBranch, 7);
                 $this->executeShellCommand('git checkout -b %s %s', array($localBranch, $remoteBranch));
