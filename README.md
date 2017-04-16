@@ -88,7 +88,7 @@ this subproject should be imported.
 being merged to this branch. Any remote branch that is not merged to this
 branch will be copied to the main repository too.
 * `ignoreBranches` is a PCRE regular expression that allows to skip some branches.
-Normally should be set to `~origin/(HEAD|master|development)~` (assuming you use
+Normally should be set to `origin/(HEAD|master|development)` (assuming you use
 GitFlow). It should list any non-feature branches that you use plus HEAD.  
 
 ## License
