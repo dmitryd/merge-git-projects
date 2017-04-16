@@ -84,6 +84,9 @@ class Merge {
         }
 
         $this->parseConfiguration();
+
+        // Prevent merge commit message prompt
+        putenv('GIT_MERGE_AUTOEDIT=no');
     }
 
     /**
@@ -228,7 +231,7 @@ class Merge {
         chdir($currentDirectory . '/' . $this->mainProject['name']);
 
         $this->executeShellCommand('git remote add -f %1$s ../%1$s', array($projectName));
-        $this->executeShellCommand('git merge %s/%s --allow-unrelated-histories', array($projectName, $project['mainBranch']));
+        $this->executeShellCommand('git merge --no-ff %s/%s --allow-unrelated-histories', array($projectName, $project['mainBranch']));
         foreach ($project['copyBranches'] as $branchName => $commitId) {
             if (!isset($this->createdLocalBranches[$branchName])) {
                 $this->executeShellCommand('git checkout -b %s %s', array($branchName, $commitId));
@@ -238,7 +241,7 @@ class Merge {
                 echo "Warning: merging into existing local branch ($branchName)!\n";
                 $this->executeShellCommand('git checkout %s', array($branchName));
             }
-            $this->executeShellCommand('git merge %s/%s --allow-unrelated-histories', array($projectName, $branchName));
+            $this->executeShellCommand('git merge --no-ff %s/%s --allow-unrelated-histories', array($projectName, $branchName));
         }
         // Reset to the newly created branch
         $this->executeShellCommand('git checkout %s', array($this->mainProject['createBranch']));
