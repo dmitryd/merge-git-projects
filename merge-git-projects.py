@@ -151,14 +151,14 @@ class MergeGitProjects:
         Finds branches in the project that are not merged to the project's main branch.
         :param: project_name: project name to search 
         """
-        new_branches = {}
         project = self.__configuration['projectsToMerge'][project_name]
-        branch_starting_point_command = "diff -u <(git rev-list --first-parent %s) <(git rev-list --first-parent %s) | sed -ne 's/^ //p' | head -1"
 
         current_directory = os.getcwd()
         os.chdir(os.path.join(current_directory, project_name))
         output = self._execute_shell_command('git branch -r --no-merged %s', project['mainBranch'])
 
+        new_branches = {}
+        branch_starting_point_command = "diff -u <(git rev-list --first-parent %s) <(git rev-list --first-parent %s) | sed -ne 's/^ //p' | head -1"
         for remote_branch in output:
             remote_branch = remote_branch.strip()
             if project['ignoreBranches'] == '' or not re.match(project['ignoreBranches'], remote_branch) and remote_branch[0:7] == 'origin/':

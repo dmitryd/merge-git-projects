@@ -201,10 +201,11 @@ class Merge {
     protected function findNonMergedBranches($projectName) {
         $output = array();
         $project = &$this->projectsToMerge[$projectName];
-        $branchStartingPointCommand = "diff -u <(git rev-list --first-parent %s) <(git rev-list --first-parent %s) | sed -ne 's/^ //p' | head -1";
         $currentDirectory = getcwd();
         chdir($currentDirectory . '/' . $projectName);
         $this->executeShellCommand('git branch -r --no-merged %s', array($project['mainBranch']), $output);
+
+        $branchStartingPointCommand = "diff -u <(git rev-list --first-parent %s) <(git rev-list --first-parent %s) | sed -ne 's/^ //p' | head -1";
         foreach ($output as $remoteBranch) {
             $remoteBranch = trim($remoteBranch);
             $regexp = '/' . str_replace('/', '\/', $project['ignoreBranches']) . '/';
