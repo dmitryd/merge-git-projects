@@ -12,7 +12,7 @@ import sys
 This file contains a tool to merge several git repositories to
 a single repository preserving history.
 
-Credits:
+Inspiration:
 - http://stackoverflow.com/a/14470212/2071628
 - http://stackoverflow.com/a/39027521/2071628
 - http://stackoverflow.com/a/4991675/2071628
