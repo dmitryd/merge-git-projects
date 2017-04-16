@@ -36,7 +36,6 @@
  * - git 2.0+
  * - Linux/Unix/OS X (not Windows!)
  * - bash or zsh as the main shell
- * - zsh
  *
  * @author Dmitry Dulepov <dmitry.dulepov@gmail.com>
  */
@@ -302,9 +301,8 @@ class Merge {
         $currentDirectory = getcwd();
         chdir($currentDirectory . '/' . $projectName);
 
-        $command = "git filter-branch -f --tree-filter \"zsh -c 'setopt extended_glob && setopt glob_dots && mkdir -p %1\$s && (mv ^(.git|%2\$s) %1\$s || true)'\" -- --all";
-        list($firstDir) = explode('/', $project['path']);
-        $this->executeShellCommand($command, array($project['path'], $firstDir));
+        $command = "git filter-branch -f --prune-empty --tree-filter \"mkdir -p %s ; git ls-tree --name-only \\\$GIT_COMMIT | xargs -I file mv file %s\" -- --all";
+        $this->executeShellCommand($command, array($project['path'], $project['path']));
 
         chdir($currentDirectory);
     }

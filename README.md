@@ -24,7 +24,7 @@ version.
 * git 2.0+
 * Linux/Unix/OS X (not Windows!)
 * bash or zsh as the main shell (/bin/sh will not work!)
-* zsh
+* xargs
 
 ### Requirements for the Python version
 
@@ -32,7 +32,7 @@ version.
 * git 2.0+
 * Linux/Unix/OS X (not Windows!)
 * bash or zsh as the main shell (/bin/sh will not work!)
-* zsh
+* xargs
 
 ## Running the script
 

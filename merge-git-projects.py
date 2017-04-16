@@ -22,7 +22,6 @@ Requirements:
 - git 2.0+
 - Linux/Unix/OS X (not Windows!)
 - bash or zsh as the main shell
-- zsh
 
 Author: Dmitry Dulepov <dmitry.dulepov@gmail.com>
 """
@@ -260,9 +259,9 @@ class MergeGitProjects:
         current_directory = os.getcwd()
         os.chdir(os.path.join(current_directory, project_name))
 
-        command = "git filter-branch -f --tree-filter \"zsh -c 'setopt extended_glob && setopt glob_dots && mkdir -p %s && (mv ^(.git|%s) %s || true)'\" -- --all"
+        command = "git filter-branch -f --tree-filter \"mkdir -p %s ; git ls-tree --name-only \\$GIT_COMMIT | xargs -I file mv file %s\" -- --all"
         first_dir = project['path'].split(os.path.sep)[0:1][0]
-        self._execute_shell_command(command, project['path'], first_dir, project['path'])
+        self._execute_shell_command(command, project['path'], project['path'])
 
         os.chdir(current_directory)
 
