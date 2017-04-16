@@ -1,4 +1,4 @@
-# Merging git projects with history
+# Merge git projects and preserve all history
 
 This script merges one or more git repositories into the existing central
 repository preserving all history. A new branch is created in the main project for
