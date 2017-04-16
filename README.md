@@ -14,23 +14,41 @@ really a lot of history!
 
 ## Requirements
 
+There are tow versions of the script: PHP and python. PHP wa sthe first one
+because I know this language better. Python version was made from the PHP
+version.
+
+### Requirements for the PHP version
+
 * PHP 5.6+
 * git 2.0+
 * Linux/Unix/OS X (not Windows!)
-* bash or zsh as the main shell
+* bash or zsh as the main shell (/bin/sh will not work!)
 * zsh
 
-Why is it written in PHP and not shell or python? It is too difficult to write
-this as a shell script and I am not very familiar with Python to do it. May be,
-I'll do in future.
+### Requirements for the Python version
+
+* Puthon 3.5 or newer
+* git 2.0+
+* Linux/Unix/OS X (not Windows!)
+* bash or zsh as the main shell (/bin/sh will not work!)
+* zsh
 
 ## Running the script
 
 To run the script, you do this:
 
 ```sh
-merge-git-projects configfile
+merge-git-projects.php configfile
 ```
+
+or
+
+```sh
+pyhton merge-git-projects.py configfile
+```
+
+PHP version will always produce verbose output while python version will do it only with `-v` option.
 
 ## Configuration file
 
