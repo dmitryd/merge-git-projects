@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import pty
 import re
 import shlex
 import shutil
@@ -33,6 +34,9 @@ class MergeGitProjects:
         """
         self.__configuration = {}
         self.__created_local_branches = []
+        self.__verbose = False
+        # Disable merge message editing
+        os.putenv('GIT_MERGE_AUTOEDIT', 'no')
 
 
     def execute(self):
@@ -41,12 +45,15 @@ class MergeGitProjects:
         """
         self._parse_arguments()
 
+        print("Creating a copy of the main repository...")
+
         self._clone_repository(self.__configuration['mainProject']['repository'],
                 self.__configuration['mainProject']['name'], self.__configuration['mainProject']['mainBranch'])
         self._configure_repository()
         self._create_new_main_branch()
 
         for project_name in self.__configuration['projectsToMerge']:
+            print("Merging project '%s'..." % project_name)
             project_to_merge = self.__configuration['projectsToMerge'][project_name]
             self._clone_repository(project_to_merge['repository'], project_name, project_to_merge['mainBranch'])
             self._rewrite_history(project_name)
@@ -64,14 +71,15 @@ class MergeGitProjects:
         """
 
         def directory_was_not_removed():
-            print('Error: cpuld not remove %s' % directory_name)
+            print('Error: could not remove %s' % directory_name)
             sys.exit(1)
 
         current_directory = os.getcwd()
         repository_directory = os.path.join(current_directory, directory_name)
 
         if os.path.exists(repository_directory):
-            print('Removing directory %s' % directory_name)
+            if self.__verbose:
+                print('Removing directory %s' % directory_name)
             shutil.rmtree(directory_name, onerror=directory_was_not_removed)
 
         self._execute_shell_command('git clone %s %s -b %s', repository, directory_name, main_branch)
@@ -104,10 +112,10 @@ class MergeGitProjects:
         """
         Runs emergency shell
         """
-        print("Something went wrong. Brining the emergency shell to correct errors manually...\n")
+        print("Something went wrong. Bringing the emergency shell to correct errors manually...\n")
         print("===========================================\n\n")
 
-        subprocess.run([os.getenv('SHELL'), '-l'])
+        pty.spawn([os.getenv('SHELL'), '-l'])
 
         print("\n\n===========================================\n\n")
         print("Emergency shell finished. ")
@@ -128,7 +136,11 @@ class MergeGitProjects:
         :return: array of lines from stdout
         """
         command = str(command_format) % args
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, universal_newlines=True)
+
+        if self.__verbose:
+            print('Executing: %s' % command)
+
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, executable=os.getenv('SHELL'), universal_newlines=True)
         if result.returncode != 0:
             self._emergency_shell()
 
@@ -140,7 +152,7 @@ class MergeGitProjects:
         Finds branches in the project that are not merged to the project's main branch.
         :param: project_name: project name to search 
         """
-        new_branches = []
+        new_branches = {}
         project = self.__configuration['projectsToMerge'][project_name]
         branch_starting_point_command = "diff -u <(git rev-list --first-parent %s) <(git rev-list --first-parent dev) | sed -ne 's/^ //p' | head -1"
 
@@ -152,8 +164,8 @@ class MergeGitProjects:
             remote_branch = remote_branch.strip()
             if project['ignoreBranches'] == '' or not re.match(project['ignoreBranches'], remote_branch) and remote_branch[0:7] == 'origin/':
                 local_branch = remote_branch[7:]
-                self._execute_shell_command('git checkout -b %s %s', [local_branch, remote_branch])
-                new_branches[local_branch] = self._execute_shell_command(branch_starting_point_command, local_branch)
+                self._execute_shell_command('git checkout -b %s %s', local_branch, remote_branch)
+                new_branches[local_branch] = self._execute_shell_command(branch_starting_point_command, local_branch)[0]
 
         self._execute_shell_command('git checkout %s', project['mainBranch'])
 
@@ -173,17 +185,17 @@ class MergeGitProjects:
         current_directory = os.getcwd()
         os.chdir(os.path.join(current_directory, self.__configuration['mainProject']['name']))
 
-        self._execute_shell_command('git remote add -f %1$s ../%1$s', project_name)
-        self._execute_shell_command('git merge %s/%s --allow-unrelated-histories', project_name, project['mainBranch'])
+        self._execute_shell_command('git remote add -f %s ../%s', project_name, project_name)
+        self._execute_shell_command('git merge --no-ff %s/%s --allow-unrelated-histories', project_name, project['mainBranch'])
         for branch_name in project['copyBranches']:
             commit_id = project['copyBranches'][branch_name]
             if branch_name not in self.__created_local_branches:
                 self._execute_shell_command('git checkout -b %s %s', branch_name, commit_id)
                 self.__created_local_branches.append(branch_name)
             else:
-                print("Warning: merging into existing local branch (branch_name)!")
+                print("Warning: merging into existing local branch (%s)!" % branch_name)
                 self._execute_shell_command('git checkout %s', branch_name)
-            self._execute_shell_command('git merge %s/%s --allow-unrelated-histories', project_name, branch_name)
+            self._execute_shell_command('git merge --no-ff %s/%s --allow-unrelated-histories', project_name, branch_name)
 
         # Reset to the newly created branch
         self._execute_shell_command('git checkout %s', self.__configuration['mainProject']['createBranch'])
@@ -205,7 +217,10 @@ class MergeGitProjects:
             epilog='See https://github.com/dmitryd/merge-git-projects for more information.'
         )
         parser.add_argument('configuration_file_name', metavar='configuration-file-name', help='Configuration file', default='')
+        parser.add_argument('-v', action='store_true', dest='verbose', help='Show what is done')
         arguments = parser.parse_args()
+
+        self.__verbose = arguments.verbose
 
         try:
             configuration_file = open(arguments.configuration_file_name, 'r')
@@ -221,12 +236,12 @@ class MergeGitProjects:
                 sys.exit(1)
 
         for option in ['name', 'repository', 'mainBranch', 'createBranch']:
-            if option not in self.__configuration.mainProject:
+            if option not in self.__configuration['mainProject']:
                 print('Error: "%s" option is missing in the "mainProject" section in the configuration file' % option)
                 sys.exit(1)
 
-        for projectName in self.__configuration.projectsToMerge:
-            project = self.__configuration.projectsToMerge[projectName]
+        for projectName in self.__configuration['projectsToMerge']:
+            project = self.__configuration['projectsToMerge'][projectName]
             for option in ['repository', 'path', 'mainBranch', 'ignoreBranches']:
                 if option not in project:
                     print('Error: "%s" option is missing in the "%s" project in the configuration file' %
@@ -240,7 +255,7 @@ class MergeGitProjects:
         os.chdir(os.path.join(current_directory, project_name))
 
         command = "git filter-branch -f --tree-filter \"zsh -c 'setopt extended_glob && setopt glob_dots && mkdir -p %s && (mv ^(.git|%s) %s || true)'\" -- --all"
-        first_dir = project['path'].split()[0:1]
+        first_dir = project['path'].split(os.path.sep)[0:1][0]
         self._execute_shell_command(command, project['path'], first_dir, project['path'])
 
         os.chdir(current_directory)
