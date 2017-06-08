@@ -12,6 +12,9 @@ If you have a lot of subprojects to merge, you can get an
 you look at the git tree in the program like Atlassian SourceTree. This is
 really a lot of history!
 
+**WARNING!** Python version is currently out of date and should not be used.
+It does **not** merge correctly!
+
 ## Requirements
 
 There are tow versions of the script: PHP and python. PHP wa sthe first one
