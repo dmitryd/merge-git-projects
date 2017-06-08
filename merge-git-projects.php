@@ -73,6 +73,8 @@ class Merge {
      */
     protected $createdLocalBranches = array();
 
+    protected $projectsInBranches = array();
+
     /**
      * Creates the instance of the class.
      */
@@ -96,11 +98,28 @@ class Merge {
         $this->configureRepository();
         $this->createNewMainBranch();
         foreach ($this->projectsToMerge as $projectName => $projectToMerge) {
-            $this->cloneRepository($projectToMerge['repository'], $projectName, $projectToMerge['mainBranch']);
-            $this->rewriteHistory($projectName);
+			$this->cloneRepository($projectToMerge['repository'], $projectName, $projectToMerge['mainBranch']);
+			$this->rewriteHistory($projectName);
             $this->findNonMergedBranches($projectName);
-            $this->mergeProject($projectName);
+        	$this->mergeSubProjectMainBranch($projectName);
         }
+		foreach ($this->projectsToMerge as $projectName => $projectToMerge) {
+            $this->mergeSubProjectOtherBranches($projectName);
+        }
+		foreach ($this->projectsToMerge as $projectName => $projectToMerge) {
+			$this->removeSubproject($projectName);
+        }
+    }
+
+    protected function removeSubproject($projectName) {
+		$currentDirectory = getcwd();
+		chdir($currentDirectory . '/' . $this->mainProject['name']);
+
+		$this->executeShellCommand('git remote remove %s', array($projectName));
+
+		chdir($currentDirectory);
+
+		$this->executeShellCommand('rm -fR %s', array($projectName));
     }
 
     /**
@@ -113,7 +132,6 @@ class Merge {
     protected function cloneRepository($repository, $subDirectory, $mainBranch) {
         if (file_exists(getcwd() . '/' . $subDirectory)) {
             $this->executeShellCommand('rm -fR %s', array(getcwd() . '/' . $subDirectory));
-            echo "Removed directory: $subDirectory\n";
         }
         $this->executeShellCommand('git clone %s %s -b %s', array($repository, $subDirectory, $mainBranch));
     }
@@ -136,6 +154,7 @@ class Merge {
     protected function createNewMainBranch() {
         $currentDirectory = getcwd();
         chdir($currentDirectory . '/' . $this->mainProject['name']);
+		$this->executeShellCommand('git checkout %s', array($this->mainProject['mainBranch']));
         $this->executeShellCommand('git checkout -b %s', array($this->mainProject['createBranch']));
         chdir($currentDirectory);
     }
@@ -148,7 +167,7 @@ class Merge {
         echo "===========================================\n\n";
 
         $shell = getenv('SHELL');
-        exec($shell . ' -l');
+        passthru($shell . ' -l');
 
         echo "\n\n===========================================\n\n";
         echo "Emergency shell finished. ";
@@ -213,6 +232,7 @@ class Merge {
                 $localBranch = substr($remoteBranch, 7);
                 $this->executeShellCommand('git checkout -b %s %s', array($localBranch, $remoteBranch));
                 $project['copyBranches'][$localBranch] = $this->executeShellCommand($branchStartingPointCommand, array($localBranch, $project['mainBranch']));
+                $this->projectsInBranches[$localBranch][] = $projectName;
             }
         }
         $this->executeShellCommand('git checkout %s', array($project['mainBranch']));
@@ -221,23 +241,40 @@ class Merge {
 
     /**
      * Merges the specified project into the new project.
-     *
-     * @param string $projectName
+	 *
+	 * @param string $projectName
      */
-    protected function mergeProject($projectName) {
+    protected function mergeSubProjectMainBranch($projectName) {
+		$project = &$this->projectsToMerge[$projectName];
+
+        $currentDirectory = getcwd();
+        chdir($currentDirectory . '/' . $this->mainProject['name']);
+
+		$this->executeShellCommand('git checkout %s', array($this->mainProject['createBranch']));
+
+		$this->executeShellCommand('git remote add -f %1$s ../%1$s', array($projectName));
+		$this->executeShellCommand('git merge --no-ff %s/%s --allow-unrelated-histories', array($projectName, $project['mainBranch']));
+
+        chdir($currentDirectory);
+    }
+
+	/**
+	  * Merges the specified project into the new project.
+	  *
+	  * @param string $projectName
+	  */
+    protected function mergeSubProjectOtherBranches($projectName) {
         $project = $this->projectsToMerge[$projectName];
 
         $currentDirectory = getcwd();
         chdir($currentDirectory . '/' . $this->mainProject['name']);
 
-        $this->executeShellCommand('git remote add -f %1$s ../%1$s', array($projectName));
-        $this->executeShellCommand('git merge --no-ff %s/%s --allow-unrelated-histories', array($projectName, $project['mainBranch']));
         foreach ($project['copyBranches'] as $branchName => $commitId) {
             if (!isset($this->createdLocalBranches[$branchName])) {
-                $this->executeShellCommand('git checkout -b %s %s', array($branchName, $commitId));
+                $this->executeShellCommand('git checkout -b %s %s', array($branchName, $this->mainProject['mainBranch']));
                 $this->createdLocalBranches[$branchName] = 1;
-            }
-            else {
+                $this->mergeOtherSubprojectsHere($projectName, $branchName);
+            } else {
                 echo "Warning: merging into existing local branch ($branchName)!\n";
                 $this->executeShellCommand('git checkout %s', array($branchName));
             }
@@ -246,11 +283,23 @@ class Merge {
         // Reset to the newly created branch
         $this->executeShellCommand('git checkout %s', array($this->mainProject['createBranch']));
 
-        $this->executeShellCommand('git remote remove %s', array($projectName));
-
         chdir($currentDirectory);
+    }
 
-        $this->executeShellCommand('rm -fR %s', array($projectName));
+	/**
+	 * Merges subprojects to the current project.
+	 *
+	 * @param string $currentProjectName
+	 * @param string $branchName
+	 */
+    protected function mergeOtherSubprojectsHere($currentProjectName, $branchName) {
+		foreach ($this->projectsToMerge as $projectName => $project) {
+			if ($projectName != $currentProjectName && !in_array($projectName, $this->projectsInBranches[$branchName])) {
+				$mainBranch = $this->projectsToMerge[$projectName]['mainBranch'];
+				echo "Merging $projectName/$mainBranch to $currentProjectName...";
+				$this->executeShellCommand('git merge --no-ff %s/%s --allow-unrelated-histories', array($projectName, $mainBranch));
+			}
+		}
     }
 
     /**
